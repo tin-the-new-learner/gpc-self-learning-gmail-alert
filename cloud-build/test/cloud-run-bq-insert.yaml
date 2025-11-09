@@ -1,0 +1,57 @@
+# cloudbuild.yaml
+substitutions:
+  _REGION: "asia-southeast1"
+  _REPO:   "gcp-self-learning-gmail-alert"                     # Artifact Registry repo
+  _IMAGE:  "bq-inserter"                  # tên image
+  _JOB:    "bq-inserter"                  # tên Cloud Run Job
+  _CONTEXT: "cloud-run/test"                   # thư mục chứa code (và Dockerfile)
+  _RUNTIME_SA: "gcp-bq-sa-github-repo-001@gcp-owner-self-learning.iam.gserviceaccount.com"
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+
+steps:
+# 1) Build image (Dockerfile nằm trong $_CONTEXT; context = toàn repo hoặc đúng folder tuỳ bạn)
+- name: gcr.io/cloud-builders/docker
+  args:
+    [
+      "build",
+      "-t","$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA",
+      "."
+    ]
+
+# 2) Push image
+- name: gcr.io/cloud-builders/docker
+  args: ["push","$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA"]
+
+# 3) Create nếu chưa có, ngược lại Update Job
+- name: gcr.io/google.com/cloudsdktool/cloud-sdk
+  entrypoint: bash
+  args:
+    - -c
+    - |
+      set -euo pipefail
+      if ! gcloud run jobs describe "$_JOB" --region="$_REGION" >/dev/null 2>&1; then
+        echo "Job not found → creating..."
+        gcloud run jobs create "$_JOB" \
+          --image="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA" \
+          --region="$_REGION" \
+          --tasks=1 \
+          --max-retries=0 \
+          --service-account="$_RUNTIME_SA"
+      else
+        echo "Job exists → updating..."
+        gcloud run jobs update "$_JOB" \
+          --image="$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA" \
+          --region="$_REGION" \
+          --tasks=1 \
+          --max-retries=0 \
+          --service-account="$_RUNTIME_SA"
+      fi
+
+# (tuỳ chọn) 4) Thực thi job ngay sau deploy
+# - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+#   args: ["run","jobs","execute","$_JOB","--region","$_REGION"]
+
+images:
+  - "$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA"
