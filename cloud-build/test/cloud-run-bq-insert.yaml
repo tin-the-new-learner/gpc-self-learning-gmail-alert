@@ -17,7 +17,7 @@ steps:
     [
       "build",
       "-t","$_REGION-docker.pkg.dev/$PROJECT_ID/$_REPO/$_IMAGE:$COMMIT_SHA",
-      "."
+      "$_CONTEXT"
     ]
 
 # 2) Push image
