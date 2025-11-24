@@ -1,7 +1,7 @@
 # cloudbuild.yaml
 substitutions:
   _REGION: "asia-southeast1"
-  _REPO:   "gpc-self-learning-gmail-alert"                     # Artifact Registry repo
+  _REPO:   "gpc-self-learning-gmail-alert"            
   _IMAGE:  "bq-inserter"                  # tên image
   _JOB:    "bq-inserter"                  # tên Cloud Run Job
   _CONTEXT: "cloud-run/test"                   # thư mục chứa code (và Dockerfile)
