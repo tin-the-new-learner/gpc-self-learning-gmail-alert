@@ -1,6 +1,6 @@
 # cloudbuild.yaml
 substitutions:
-  _REGION: "us-west1"
+  _REGION: "asia-southeast1"
   _REPO:   "gpc-self-learning-gmail-alert"            
   _IMAGE:  "bq-inserter"                  # tên image
   _JOB:    "bq-inserter"                  # tên Cloud Run Job
